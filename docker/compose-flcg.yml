@@ -1,0 +1,46 @@
+services:
+    # ----------
+    # Vector
+    # ----------
+    vector:
+        image: timberio/vector:latest-alpine
+        container_name: vector
+        volumes:
+            - ./config/vector/vector.toml:/etc/vector/vector.toml:ro
+            - ../logs:/logs:ro
+        ports:
+            - "8686:8686" # API endpoint
+        environment:
+            - VECTOR_CONFIG=/etc/vector/vector.toml
+        restart: no
+        depends_on:
+            - clickhouse
+        networks:
+            - flcg
+    
+    # ----------
+    # ClickHouse
+    # ----------
+    clickhouse:
+        image: clickhouse/clickhouse-server:latest
+        container_name: clickhouse
+        ports:
+            - "8123:8123"   # HTTP interface
+            - "9000:9000"   # Native TCP interface
+        ulimits:
+            nofile:
+                soft: 262144
+                hard: 262144
+        environment:
+            - CLICKHOUSE_DB=logs
+            - CLICKHOUSE_USER=admin
+            - CLICKHOUSE_PASSWORD=admin
+        networks:
+            - flcg
+        volumes:
+            - ./volumes/clickhouse:/var/lib/clickhouse
+
+networks:
+    flcg:
+        driver: bridge
+        name: flcg

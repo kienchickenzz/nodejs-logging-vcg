@@ -1,0 +1,35 @@
+[api]
+enabled = true
+address = "0.0.0.0:8686"
+
+[sources.file_logs]
+type = "file"
+include = ["/logs/*.log", "/logs/**/*.log"]
+read_from = "beginning"
+
+[transforms.parse_logs]
+type = "remap"
+inputs = ["file_logs"]
+source = '''
+    # Chỉ gửi 3 trường cơ bản
+    .test_message = "Hello from Vector"
+'''
+
+[sinks.console]
+type = "console"
+inputs = ["parse_logs"]
+encoding.codec = "json"
+target = "stdout"
+
+[sinks.clickhouse]
+type = "clickhouse"
+inputs = ["parse_logs"]
+endpoint = "http://clickhouse:8123"
+database = "logs"
+table = "test"
+compression = "gzip"
+
+[sinks.clickhouse.auth]
+strategy = "basic"
+user = "admin"
+password = "admin"
